@@ -1,0 +1,36 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Environment / secrets ---
+.env
+*.env.local
+
+# --- Runtime-generated project data (see BLUEPRINT.md §3) ---
+markdown_docs/
+parent_store/
+qdrant_db/
+checkpoints.db
+*.sqlite3
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- uv / packaging ---
+dist/
+build/
