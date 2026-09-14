@@ -16,11 +16,10 @@ env/
 .env
 *.env.local
 
-# --- Runtime-generated project data (see BLUEPRINT.md §3) ---
-markdown_docs/
-parent_store/
-qdrant_db/
-checkpoints.db
+# --- Runtime-generated project data ---
+# Everything the running app produces lives under one directory (SELF_RAG_DATA_DIR):
+# converted markdown, parent chunks, the Qdrant store, and conversation checkpoints.
+data/
 *.sqlite3
 
 # --- Notebooks ---
