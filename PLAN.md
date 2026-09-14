@@ -3,8 +3,9 @@
 This is the living record of how `self-correcting-rag` is being built. It is updated at the end of
 every stage, so it always answers two questions: **what works today**, and **what is next**.
 
-Every stage ends with a written explanation in [`docs/stages/`](docs/stages/) and a commit. Nothing
-moves to the next stage until the current one is understood.
+Every stage ends the same way: a written explanation in [`docs/stages/`](docs/stages/), an update to
+this file, then a commit pushed to GitHub. Nothing moves to the next stage until the current one is
+understood.
 
 **Legend:** ✅ done · ▶️ in progress · ⬜ not started
 
