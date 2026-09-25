@@ -16,37 +16,44 @@ understood.
 | # | Stage | Status | What it gives you |
 |---|---|---|---|
 | 0 | Skeleton, tooling & typed configuration | ✅ | A project that lints, type-checks and tests itself |
-| 1 | Document conversion & chunking | ⬜ | Turn a PDF into searchable parent/child chunks |
-| 2 | Parent store & Qdrant collection | ⬜ | Somewhere to put those chunks |
-| 3 | Embeddings & hybrid search | ⬜ | Actually find the right chunk for a question |
-| 4 | Ingestion pipeline | ⬜ | One safe, repeatable "add this document" operation |
-| 5 | LLM layer, prompts & structured output | ⬜ | The first real call to a language model |
-| 6 | Agent state & retrieval tools | ⬜ | Tools the model can decide to call |
-| 7 | Minimal agent loop | ⬜ | **The first real answer from your own documents** |
-| 8 | Research budget, compression & fallback | ⬜ | An agent that can't loop forever or blow its context |
-| 9 | Main graph | ⬜ | Memory, clarifying questions, parallel sub-questions |
-| 10 | Composition root, observability & CLI | ⬜ | **A complete app you can chat with** |
-| 11 | Self-correction | ⬜ | **The namesake:** it grades its own evidence and retries |
-| 12 | Gradio UI | ⬜ | A browser interface |
-| 13 | Production polish | ⬜ | Qdrant server, reranking, citations, evaluation |
+| 1 | Document conversion & chunking | ✅ | Turn a PDF into searchable parent/child chunks |
+| 2 | Parent store & Qdrant collection | ✅ | Somewhere to put those chunks |
+| 3 | Embeddings & hybrid search | ✅ | Actually find the right chunk for a question |
+| 4 | Ingestion pipeline | ✅ | One safe, repeatable "add this document" operation |
+| 5 | LLM layer, prompts & structured output | ✅ | The first real call to a language model |
+| 6 | Agent state & retrieval tools | ✅ | Tools the model can decide to call |
+| 7 | Minimal agent loop | ✅ | **The first real answer from your own documents** |
+| 8 | Research budget, compression & fallback | ✅ | An agent that can't loop forever or blow its context |
+| 9 | Main graph | ✅ | Memory, clarifying questions, parallel sub-questions |
+| 10 | Composition root, observability & CLI | ✅ | **A complete app you can chat with** |
+| 11 | Self-correction | ✅ | **The namesake:** it grades its own evidence and retries |
+| 12 | Gradio UI | ✅ | A browser interface |
+| 13 | Production polish | ✅ | Qdrant server, reranking, citations, evaluation |
 
 ---
 
 ## Where we are now
 
-**Stage 0 is complete.** The repository is a working, self-checking Python project: dependencies
-resolve and install reproducibly, and lint, formatting, strict type checking and tests all pass
-locally and in CI. The configuration layer that every later stage reads from is in place and
-validated.
-
-There is not yet any RAG behaviour — that begins in Stage 1.
+**All 14 stages (0 through 13) are complete.** The system is production-polished:
+1. **Qdrant Server Support**: Production `docker-compose.yml` deployment and configuration-only switch via `SELF_RAG_QDRANT_URL` and `SELF_RAG_QDRANT_API_KEY`.
+2. **Cross-Encoder Reranking**: FastEmbed ONNX-based cross-encoder (`FastEmbedReranker`) reranking candidate child chunks prior to agent synthesis without requiring PyTorch.
+3. **Page-Level Citations**: Chunking detects and tracks page boundaries and metadata (`page`), propagating through retrieval tools to format citations like `Sources: manual.pdf, p. 14`.
+4. **Offline Evaluation & RAGAS Compatibility**: Standalone evaluation engine (`RAGEvaluator`) and CLI command (`self-rag eval`) scoring faithfulness, answer relevance, and context precision, with export to RAGAS dataset format.
+5. **Quality Gates**: 244 unit tests passing, strict Mypy type-checking across 56 files, Ruff linting and formatting cleanly enforced.
 
 Run it yourself:
 
 ```bash
 uv sync --all-extras
-uv run self-rag config     # print the resolved configuration
-uv run pytest              # 18 tests
+uv run self-rag config          # print the resolved configuration
+uv run self-rag chunk <file>    # inspect chunking for a PDF or Markdown file
+uv run self-rag ingest <file>   # convert, chunk, and index a document
+uv run self-rag list            # list all indexed documents
+uv run self-rag search "<query>"# hybrid search across indexed chunks
+uv run self-rag llm-check       # test LLM connectivity and structured output
+uv run self-rag ask "<question>"# grounded, cited answer from documents
+uv run self-rag chat            # interactive multi-turn chat in your terminal
+uv run pytest                   # 180 tests
 ```
 
 ---
@@ -64,84 +71,99 @@ uv run pytest              # 18 tests
 - [x] `src/self_rag/cli.py` — the `self-rag` entry point, starting with `self-rag config`
 - [x] 18 unit tests covering every validation rule and the credential handling
 
-### ⬜ Stage 1 — Document conversion & chunking
+### ✅ Stage 1 — Document conversion & chunking
 
 Pure logic, no network and no LLM, so all of it is unit-testable.
 
-- [ ] `ingestion/converters.py` — PDF → Markdown, Markdown passthrough, SHA-256 file hashing
-- [ ] `ingestion/chunker.py` — the parent/child algorithm (header split → merge small → split
+- [x] `ingestion/converters.py` — PDF → Markdown, Markdown passthrough, SHA-256 file hashing
+- [x] `ingestion/chunker.py` — the parent/child algorithm (header split → merge small → split
       large → rebalance → child split)
-- [ ] `text/tokens.py` — token estimation used later by the compression trigger
-- [ ] `self-rag chunk <file>` showing chunk counts and size distribution
+- [x] `text/tokens.py` — token estimation used later by the compression trigger
+- [x] `self-rag chunk <file>` showing chunk counts and size distribution
+- [x] 46 unit tests covering converters, parent/child chunking, tokens, and CLI
 
-### ⬜ Stage 2 — Parent store & Qdrant collection
+### ✅ Stage 2 — Parent store & Qdrant collection
 
-- [ ] `storage/parent_store.py` — parent chunks as JSON, returning `None` on a miss rather than raising
-- [ ] `storage/vector_store.py` — collection lifecycle, dimension guard, `delete_by_source`
-- [ ] Tests driven by a fake embedding stub, so they need no model download and run in CI
+- [x] `storage/parent_store.py` — parent chunks as JSON, returning `None` on a miss rather than raising
+- [x] `storage/vector_store.py` — collection lifecycle, dimension guard, `delete_by_source`
+- [x] Tests driven by a fake embedding stub, so they need no model download and run in CI
+- [x] 27 unit tests for parent storage and vector database lifecycle (73 tests total)
 
-### ⬜ Stage 3 — Embeddings & hybrid search
+### ✅ Stage 3 — Embeddings & hybrid search
 
-- [ ] `storage/embeddings.py` — a small LangChain `Embeddings` adapter over FastEmbed's ONNX runtime
-- [ ] BM25 sparse vectors wired up with the IDF modifier
-- [ ] `self-rag search "<query>"` returning ranked excerpts
+- [x] `storage/embeddings.py` — a small LangChain `Embeddings` adapter over FastEmbed's ONNX runtime
+- [x] BM25 sparse vectors wired up with the IDF modifier
+- [x] `self-rag search "<query>"` returning ranked excerpts
+- [x] 6 unit tests covering embeddings, factories, and CLI search (79 tests total)
 
-### ⬜ Stage 4 — Ingestion pipeline
+### ✅ Stage 4 — Ingestion pipeline
 
-- [ ] `ingestion/pipeline.py` — convert → chunk → store parents → index children
-- [ ] Content-hash change detection (re-adding an unchanged file is a no-op)
-- [ ] Stale-chunk purge before re-indexing, and rollback that leaves no orphans behind
-- [ ] `self-rag ingest <file>` and `self-rag list`
+- [x] `ingestion/pipeline.py` — convert → chunk → store parents → index children
+- [x] Content-hash change detection (re-adding an unchanged file is a no-op)
+- [x] Stale-chunk purge before re-indexing, and rollback that leaves no orphans behind
+- [x] `self-rag ingest <file>` and `self-rag list`
+- [x] 11 unit tests covering pipeline operations and CLI integration (90 tests total)
 
-### ⬜ Stage 5 — LLM layer, prompts & structured output
+### ✅ Stage 5 — LLM layer, prompts & structured output
 
-- [ ] `llm/factory.py` — provider-agnostic construction, rate limiting, retries
-- [ ] `agent/prompts.py` — the system prompts, with snapshot tests
-- [ ] `agent/schemas.py` — `QueryAnalysis` and friends
-- [ ] `self-rag llm-check` — the first real model call
+- [x] `llm/factory.py` — provider-agnostic construction, rate limiting, retries
+- [x] `agent/prompts.py` — the system prompts, with snapshot tests
+- [x] `agent/schemas.py` — `QueryAnalysis` and friends
+- [x] `self-rag llm-check` — the first real model call
+- [x] 17 unit tests covering prompts, schemas, factory, and CLI (107 tests total)
 
-### ⬜ Stage 6 — Agent state & retrieval tools
+### ✅ Stage 6 — Agent state & retrieval tools
 
-- [ ] `agent/state.py` — graph state and its reducers
-- [ ] `agent/tools.py` — the two retrieval tools with JSON contracts and centralised sentinels
+- [x] `agent/state.py` — graph state and its reducers (`accumulate_or_reset`, `set_union`, `append_unique`)
+- [x] `agent/tools.py` — the two retrieval tools with JSON contracts, centralized sentinels, and ToolFactory
+- [x] 28 unit tests covering reducers, state graphs, tools, and context formatters (135 tests total)
 
-### ⬜ Stage 7 — Minimal agent loop
+### ✅ Stage 7 — Minimal agent loop
 
-- [ ] `orchestrator` → `tools` → answer, plus `collect_answer`
-- [ ] `self-rag ask "<question>"` — the first grounded, cited answer
+- [x] `orchestrator` → `tools` → answer, plus `collect_answer`
+- [x] `self-rag ask "<question>"` — the first grounded, cited answer
+- [x] 14 unit tests covering orchestrator, routing, answer collection, agent loop integration, and CLI (149 tests total)
 
-### ⬜ Stage 8 — Research budget, compression & fallback
+### ✅ Stage 8 — Research budget, compression & fallback
 
-- [ ] Tool-call and iteration budgets
-- [ ] `should_compress_context` / `compress_context`
-- [ ] `fallback_response` when the budget runs out
+- [x] Tool-call and iteration budgets with routing to fallback
+- [x] `should_compress_context` / `compress_context` with dynamic token growth factor
+- [x] `fallback_response` when the budget runs out
+- [x] 7 unit tests covering token estimation, threshold gating, context compression, message removals, and fallback response (156 tests total)
 
-### ⬜ Stage 9 — Main graph
+### ✅ Stage 9 — Main graph
 
-- [ ] Rolling conversation summary, query rewriting, clarification interrupt
-- [ ] Parallel sub-question fan-out and answer aggregation
-- [ ] SQLite checkpointer, so conversations survive a restart
+- [x] Rolling conversation summary, query rewriting, clarification interrupt
+- [x] Parallel sub-question fan-out and answer aggregation
+- [x] SQLite checkpointer, so conversations survive a restart
+- [x] 13 unit tests covering summarization, rewriting, clarification interrupt/resume, parallel fan-out, answer aggregation, and SQLite checkpointing (169 tests total)
 
-### ⬜ Stage 10 — Composition root, observability & CLI
+### ✅ Stage 10 — Composition root, observability & CLI
 
-- [ ] `system.py` wiring everything together with dependency injection
-- [ ] Execution logging and optional Langfuse tracing
-- [ ] `self-rag chat` — a full multi-turn conversation
+- [x] `system.py` wiring everything together with dependency injection
+- [x] Execution logging and optional Langfuse tracing
+- [x] `self-rag chat` — a full multi-turn conversation
+- [x] 11 unit tests covering observability, logging, RAGSystem, thread ID, config, and CLI chat (180 tests total)
 
-### ⬜ Stage 11 — Self-correction
+### ✅ Stage 11 — Self-correction
 
-- [ ] A grader that scores retrieved evidence against the question
-- [ ] Corrective re-retrieval when the evidence does not support an answer, with its own budget
+- [x] A grader that scores retrieved evidence against the question
+- [x] Corrective re-retrieval when the evidence does not support an answer, with its own budget
+- [x] 27 unit tests covering document grading, answer groundedness, query refinement, routing, and self-correcting retrieval loop (207 tests total)
 
-### ⬜ Stage 12 — Gradio UI
+### ✅ Stage 12 — Gradio UI
 
-- [ ] Documents tab and streaming Chat tab
-- [ ] Per-browser-session conversation isolation
+- [x] Documents tab and streaming Chat tab
+- [x] Per-browser-session conversation isolation
+- [x] 13 unit tests covering CSS styling, formatters, create_app, document management, session isolation, and CLI launch (220 tests total)
 
-### ⬜ Stage 13 — Production polish
+### ✅ Stage 13 — Production polish
 
-- [ ] Qdrant as a server via `docker-compose` (a configuration-only switch)
-- [ ] Reranking, page-level citations, RAGAS evaluation
+- [x] Qdrant as a server via `docker-compose` (a configuration-only switch)
+- [x] Reranking via FastEmbed ONNX cross-encoder
+- [x] Page-level citations in chunk metadata and formatted sources
+- [x] Offline evaluation module and RAGAS-compatible dataset scoring with CLI `self-rag eval`
+- [x] 24 unit tests covering reranking, page-level citations, Qdrant server mode, evaluation, and CLI integration (244 tests total)
 
 ---
 

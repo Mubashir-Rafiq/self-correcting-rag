@@ -77,6 +77,8 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+"src/self_rag/agent/prompts.py" = ["E501"]
+"src/self_rag/agent/state.py" = ["N815"]
 
 # ----------------------------------------------------------------------------
 # Type checking
@@ -93,10 +95,12 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = [
     "fastembed.*",
+    "pymupdf.*",
     "pymupdf4llm.*",
     "qdrant_client.*",
     "langchain_qdrant.*",
     "langgraph.*",
+    "tiktoken.*",
 ]
 ignore_missing_imports = true
 

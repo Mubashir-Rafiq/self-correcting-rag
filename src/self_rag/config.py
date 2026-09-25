@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     # --- Qdrant ------------------------------------------------------------
     child_collection: str = "document_child_chunks"
     sparse_vector_name: str = "sparse"
+    qdrant_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SELF_RAG_QDRANT_URL", "QDRANT_URL"),
+    )
+    qdrant_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SELF_RAG_QDRANT_API_KEY", "QDRANT_API_KEY"),
+    )
 
     # --- Embedding models --------------------------------------------------
     dense_model: str = "BAAI/bge-small-en-v1.5"
@@ -51,7 +59,7 @@ class Settings(BaseSettings):
 
     # --- Language model ----------------------------------------------------
     llm_provider: LlmProvider = "google_genai"
-    llm_model: str = "gemini-2.5-flash"
+    llm_model: str = "gemini-3.6-flash"
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     llm_max_retries: int = Field(default=3, ge=0)
     # Free tiers are measured in requests per minute, and a fan-out fires several at once.
@@ -67,19 +75,27 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SELF_RAG_GROQ_API_KEY", "GROQ_API_KEY"),
     )
 
-    # --- Retrieval ---------------------------------------------------------
+    # --- Retrieval & Reranking ---------------------------------------------
     retrieval_k: int = Field(default=7, gt=0)
     # NOTE: in hybrid mode Qdrant ranks by Reciprocal Rank Fusion, not cosine similarity. A fused
     # score is 1/(rank+2) summed across the dense and sparse branches, so it maxes out at 1.0 and
     # says nothing about semantic closeness. A floor of 0.4 silently drops results ranked worse
     # than 1st in both branches. Left disabled by default; see docs/stages/stage-00.
     hybrid_score_floor: float | None = Field(default=None, ge=0.0, le=2.0)
+    reranker_enabled: bool = False
+    reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
+    reranker_top_k: int = Field(default=5, gt=0)
 
     # --- Agent research budget ---------------------------------------------
     max_tool_calls: int = Field(default=4, gt=0)
     max_iterations: int = Field(default=4, gt=0)
     max_subquestions: int = Field(default=2, gt=0)
     graph_recursion_limit: int = Field(default=50, gt=0)
+
+    # --- Self-correction & Grading -----------------------------------------
+    self_correction_enabled: bool = False
+    max_correction_retries: int = Field(default=2, ge=0)
+    judge_model: str | None = None
 
     # --- Conversation memory -----------------------------------------------
     # Must be >= 2: the code keeps (n - 1) messages verbatim, and a keep-count of 0 would slice
